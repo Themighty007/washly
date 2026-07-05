@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Washly Cleaner</string>
+    <string name="title_activity_main">Washly Cleaner</string>
+    <string name="package_name">com.washly.cleaner</string>
+    <string name="custom_url_scheme">com.washly.cleaner</string>
+</resources>

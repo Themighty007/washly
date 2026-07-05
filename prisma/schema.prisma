@@ -1,0 +1,241 @@
+// Prisma schema for Car Wash Management Ecosystem
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============= USERS (Base table for all roles) =============
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String
+  role      String   @default("CUSTOMER") // CUSTOMER | CLEANER | ADMIN
+  avatar    String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer      Customer?
+  cleaner       Cleaner?
+  notifications Notification[]
+}
+
+// ============= PLANS (Subscription tiers) =============
+model Plan {
+  id           String   @id @default(cuid())
+  name         String
+  monthlyPrice Float
+  totalWashes  Int
+  description  String
+  features     String   // JSON array as string
+  popular      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customersWithPlan     Customer[]               @relation("CustomerActivePlan")
+  subscriptionRequests  SubscriptionRequest[]
+}
+
+// ============= CUSTOMERS =============
+model Customer {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Active subscription
+  activePlanId String?
+  activePlan   Plan?    @relation("CustomerActivePlan", fields: [activePlanId], references: [id])
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+  remainingWashes   Int      @default(0)
+  status            String   @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cars        Car[]
+  bookings    Booking[]
+  payments    Payment[]
+  subscriptionRequests SubscriptionRequest[]
+}
+
+// ============= CLEANERS =============
+model Cleaner {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status       String   @default("ACTIVE") // ACTIVE | INACTIVE | ON_LEAVE
+  rating       Float    @default(5.0)
+  totalCompleted Int    @default(0)
+  totalAssigned  Int    @default(0)
+  vehicleNumber String?
+  zone         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings    Booking[]
+  attendance  Attendance[]
+}
+
+// ============= CARS =============
+model Car {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  make         String
+  model        String
+  year         Int
+  licensePlate String
+  color        String
+  details      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+// ============= BOOKINGS (= Wash Tasks) =============
+model Booking {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  carId        String
+  car          Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  cleanerId    String?
+  cleaner      Cleaner? @relation(fields: [cleanerId], references: [id], onDelete: SetNull)
+
+  // Scheduling
+  date         DateTime
+  timeSlot     String   // "09:00 - 10:00"
+  duration     Int      @default(60) // minutes
+
+  // Location
+  address      String
+
+  // Status flow: PENDING -> ASSIGNED -> IN_PROGRESS -> COMPLETED
+  //                                                -> MISSED (car not available)
+  //                                                -> CANCELLED
+  status       String   @default("PENDING") // PENDING | ASSIGNED | IN_PROGRESS | COMPLETED | MISSED | CANCELLED
+
+  // For missed washes
+  missReason   String?
+
+  // Completion data
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  // Internal notes
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  photos       Photo[]
+}
+
+// ============= PHOTOS (Before/after wash) =============
+model Photo {
+  id           String   @id @default(cuid())
+  bookingId    String
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Position 1-5 (1-4 required, 5 optional)
+  position     Int
+  // Type: BEFORE | AFTER | PROGRESS
+  type         String   @default("AFTER")
+  // Base64-encoded image data
+  imageData    String
+  fileName     String?
+  fileSize     Int?
+
+  uploadedAt   DateTime @default(now())
+}
+
+// ============= PAYMENTS (Subscription tracking) =============
+model Payment {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // What is being paid for
+  planName     String
+  amount       Float
+  period       String   // "2026-07" format
+
+  // Status: PENDING | PAID | OVERDUE | REFUNDED
+  status       String   @default("PENDING")
+  method       String?  // CASH | UPI | CARD | BANK_TRANSFER
+  paidAt       DateTime?
+  dueDate      DateTime
+
+  // Notes
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============= NOTIFICATIONS =============
+model Notification {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Type of notification event
+  type         String   // SLOT_CHANGED | CLEANER_ASSIGNED | WASH_COMPLETED | CAR_UNAVAILABLE | PAYMENT_REMINDER | NEW_BOOKING | PLAN_CHANGED | PLAN_CHANGE_REQUESTED
+  title        String
+  message      String
+  isRead       Boolean  @default(false)
+
+  // Optional related entity
+  relatedId    String?
+
+  createdAt    DateTime @default(now())
+}
+
+// ============= ATTENDANCE =============
+model Attendance {
+  id           String   @id @default(cuid())
+  cleanerId    String
+  cleaner      Cleaner  @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  date         DateTime
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  totalHours   Float?
+  status       String   @default("ABSENT") // PRESENT | ABSENT | HALF_DAY
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============= SUBSCRIPTION REQUESTS (Plan changes) =============
+model SubscriptionRequest {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  requestedPlanId String
+  requestedPlan   Plan    @relation(fields: [requestedPlanId], references: [id])
+  currentPlanId   String?
+
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  notes        String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
