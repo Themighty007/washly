@@ -303,23 +303,25 @@ function CustomerDetailDrawer({ customer, plans, onClose, onRefresh }: any) {
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              <AvatarFallback className="brand-gradient text-white">
-                {getInitials(fullData.user.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p>{fullData.user.name}</p>
-              <p className="text-sm font-normal text-muted-foreground">{fullData.user.email}</p>
-            </div>
-          </SheetTitle>
-          <SheetDescription>Customer profile and history</SheetDescription>
-        </SheetHeader>
+      <SheetContent className="w-full sm:max-w-2xl flex flex-col p-0 h-full">
+        <div className="p-6 pb-4 border-b">
+          <SheetHeader className="p-0">
+            <SheetTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarFallback className="brand-gradient text-white">
+                  {getInitials(fullData.user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p>{fullData.user.name}</p>
+                <p className="text-sm font-normal text-muted-foreground">{fullData.user.email}</p>
+              </div>
+            </SheetTitle>
+            <SheetDescription>Customer profile and history</SheetDescription>
+          </SheetHeader>
+        </div>
 
-        <div className="space-y-5 mt-6">
+        <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
           {/* Status & plan */}
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge status={fullData.status} />
