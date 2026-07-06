@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
@@ -9,13 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Home, User as UserIcon, Bell, Clock, MapPin, Phone, Car, ChevronRight,
@@ -31,12 +25,10 @@ import { cn } from "@/lib/utils";
 type Tab = "home" | "profile";
 
 export function CleanerApp() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [showNotAvailable, setShowNotAvailable] = useState(false);
   const { logout } = useAuth();
 
   const loadData = useCallback(async () => {
@@ -93,7 +85,7 @@ export function CleanerApp() {
             >
               <HomeTab
                 data={data}
-                onSelectTask={(t: any) => setSelectedTask(t)}
+                onSelectTask={(t: any) => router.push(`/cleaner/task/${t.id}`)}
                 onRefresh={loadData}
               />
             </motion.div>
@@ -118,51 +110,6 @@ export function CleanerApp() {
           <TabButton active={tab === "profile"} onClick={() => setTab("profile")} icon={UserIcon} label="Profile" />
         </div>
       </nav>
-
-      {selectedTask && (
-        <TaskDetailsModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onStartWash={async () => {
-            const res = await authFetch(`/api/cleaner/task/${selectedTask.id}?action=start`, { method: "PATCH" });
-            if (res.ok) {
-              toast.success("Wash started");
-              loadData();
-              setSelectedTask(null);
-            }
-          }}
-          onComplete={() => {
-            setShowUpload(true);
-          }}
-          onNotAvailable={() => setShowNotAvailable(true)}
-        />
-      )}
-
-      {showUpload && selectedTask && (
-        <UploadPhotosModal
-          task={selectedTask}
-          onClose={() => setShowUpload(false)}
-          onSuccess={() => {
-            setShowUpload(false);
-            setSelectedTask(null);
-            loadData();
-            toast.success("Wash completed successfully!");
-          }}
-        />
-      )}
-
-      {showNotAvailable && selectedTask && (
-        <CarNotAvailableModal
-          task={selectedTask}
-          onClose={() => setShowNotAvailable(false)}
-          onSuccess={() => {
-            setShowNotAvailable(false);
-            setSelectedTask(null);
-            loadData();
-            toast.success("Reported as car not available");
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -190,7 +137,10 @@ function HomeTab({ data, onSelectTask, onRefresh }: any) {
 
   async function handleAttendance(action: "check-in" | "check-out") {
     try {
-      const res = await authFetch(`/api/cleaner/attendance?action=${action}`, { method: "POST" });
+      const res = await authFetch("/api/cleaner/attendance", {
+        method: "POST",
+        body: JSON.stringify({ action })
+      });
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error || "Failed");
@@ -199,7 +149,8 @@ function HomeTab({ data, onSelectTask, onRefresh }: any) {
       toast.success(action === "check-in" ? "Checked in successfully!" : "Checked out successfully!");
       onRefresh();
     } catch (e) {
-      toast.error("Network error");
+      console.error("Attendance error:", e);
+      toast.error("Network error. Please check your connection.");
     }
   }
 
@@ -465,349 +416,5 @@ function InfoRow({ icon: Icon, label, value }: { icon: any; label: string; value
         <p className="text-sm font-medium mt-0.5 break-words">{value}</p>
       </div>
     </div>
-  );
-}
-
-// ============= TASK DETAILS MODAL =============
-function TaskDetailsModal({ task, onClose, onStartWash, onComplete, onNotAvailable }: any) {
-  const isInProgress = task.status === "IN_PROGRESS";
-  const isCompleted = task.status === "COMPLETED";
-  const isMissed = task.status === "MISSED";
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between gap-2">
-            <span>Task Details</span>
-            <StatusBadge status={task.status} />
-          </DialogTitle>
-          <DialogDescription>
-            {new Date(task.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })} · {task.timeSlot}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-4 pb-2">
-            {/* Customer info */}
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-2">Customer</p>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="brand-gradient text-white text-xs">
-                      {getInitials(task.customer.user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{task.customer.user.name}</p>
-                    <p className="text-xs text-muted-foreground">{task.customer.user.phone}</p>
-                  </div>
-                  <a href={`tel:${task.customer.user.phone}`}>
-                    <Button size="icon" variant="outline" className="h-9 w-9">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Address with navigation */}
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-2">Location</p>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-brand mt-0.5" />
-                  <p className="text-sm flex-1">{task.address}</p>
-                </div>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.address)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 block"
-                >
-                  <Button variant="outline" className="w-full" size="sm">
-                    <Navigation className="h-3.5 w-3.5 mr-2" />
-                    Open in Maps
-                  </Button>
-                </a>
-              </CardContent>
-            </Card>
-
-            {/* Car details */}
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-xs text-muted-foreground mb-2">Car</p>
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                    <Car className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{task.car.color} {task.car.make} {task.car.model}</p>
-                    <p className="text-xs text-muted-foreground">{task.car.year} · {task.car.licensePlate}</p>
-                  </div>
-                </div>
-                {task.car.details && (
-                  <p className="text-xs text-muted-foreground mt-2">{task.car.details}</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {isMissed && task.missReason && (
-              <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
-                <CardContent className="p-4">
-                  <p className="text-xs text-red-600 dark:text-red-400 font-medium mb-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Wash Missed
-                  </p>
-                  <p className="text-sm">{task.missReason}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </ScrollArea>
-
-        <DialogFooter className="flex-col gap-2 p-4 border-t bg-background">
-          {!isCompleted && !isMissed && (
-            <>
-              {!isInProgress && (
-                <Button className="w-full brand-gradient text-white" onClick={onStartWash}>
-                  Start Wash
-                </Button>
-              )}
-              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={onComplete}>
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Complete Wash
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/20"
-                onClick={onNotAvailable}
-              >
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Car Not Available
-              </Button>
-            </>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ============= UPLOAD PHOTOS MODAL =============
-function UploadPhotosModal({ task, onClose, onSuccess }: any) {
-  const [photos, setPhotos] = useState<Record<number, string>>({}); // position -> dataURL
-  const [loading, setLoading] = useState(false);
-  const fileInputs = useRef<Record<number, HTMLInputElement | null>>({});
-
-  function handleFileSelect(position: number, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image too large (max 5MB)");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotos((prev) => ({ ...prev, [position]: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function removePhoto(position: number) {
-    setPhotos((prev) => {
-      const next = { ...prev };
-      delete next[position];
-      return next;
-    });
-  }
-
-  async function handleSubmit() {
-    const required = [1, 2, 3, 4];
-    for (const pos of required) {
-      if (!photos[pos]) {
-        toast.error(`Photo ${pos} is required`);
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      const photosArray = Object.entries(photos).map(([pos, data]) => ({
-        position: parseInt(pos),
-        imageData: data,
-        fileName: `wash-photo-${pos}.jpg`,
-      }));
-      const res = await authFetch(`/api/cleaner/task/${task.id}?action=complete`, {
-        method: "PATCH",
-        body: JSON.stringify({ photos: photosArray }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Failed to complete wash");
-        return;
-      }
-      onSuccess();
-    } catch (e) {
-      console.error(e);
-      toast.error("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const slots = [1, 2, 3, 4, 5];
-  const requiredCount = 4;
-  const uploadedCount = Object.keys(photos).length;
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Upload Wash Photos</DialogTitle>
-          <DialogDescription>
-            Take or upload at least 4 photos to complete the wash. Photo 5 is optional.
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-3 pb-2">
-            {/* Progress */}
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-              <Camera className="h-4 w-4 text-brand" />
-              <span className="text-xs flex-1">
-                {uploadedCount}/{requiredCount} required photos uploaded
-              </span>
-              {uploadedCount >= requiredCount && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-            </div>
-
-            {/* Photo slots */}
-            <div className="grid grid-cols-2 gap-3">
-              {slots.map((pos) => {
-                const isRequired = pos <= 4;
-                const hasPhoto = !!photos[pos];
-                return (
-                  <div key={pos} className="space-y-1">
-                    <div className="relative aspect-square rounded-xl border-2 border-dashed overflow-hidden bg-muted/30">
-                      {hasPhoto ? (
-                        <>
-                          <img src={photos[pos]} alt={`Photo ${pos}`} className="h-full w-full object-cover" />
-                          <button
-                            onClick={() => removePhoto(pos)}
-                            className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => fileInputs.current[pos]?.click()}
-                          className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                        >
-                          <Upload className="h-5 w-5 mb-1" />
-                          <span className="text-[10px] font-medium">Upload</span>
-                        </button>
-                      )}
-                      <input
-                        ref={(el) => { fileInputs.current[pos] = el; }}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={(e) => handleFileSelect(pos, e)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-1 text-[10px]">
-                      <span className="font-medium">Photo {pos}</span>
-                      {isRequired ? (
-                        <span className="text-red-500">*</span>
-                      ) : (
-                        <span className="text-muted-foreground">(optional)</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </ScrollArea>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={loading || uploadedCount < requiredCount}
-            className="brand-gradient text-white"
-          >
-            {loading ? "Completing..." : "Complete Wash"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ============= CAR NOT AVAILABLE MODAL =============
-function CarNotAvailableModal({ task, onClose, onSuccess }: any) {
-  const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleConfirm() {
-    setLoading(true);
-    try {
-      const res = await authFetch(`/api/cleaner/task/${task.id}?action=car-not-available`, {
-        method: "PATCH",
-        body: JSON.stringify({ reason: reason || "Car not available at location" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Failed");
-        return;
-      }
-      onSuccess();
-    } catch (e) {
-      toast.error("Network error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <AlertDialog open onOpenChange={(o) => !o && onClose()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            Mark Car Not Available?
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            This will mark the wash as MISSED and notify the admin team. The customer will be contacted to reschedule.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <div className="py-2">
-          <label className="text-xs font-medium text-muted-foreground">Reason (optional)</label>
-          <textarea
-            className="w-full mt-1 p-2 rounded-lg border bg-background text-sm resize-none"
-            rows={3}
-            placeholder="e.g., Customer's car was not at the location"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirm}
-            disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            {loading ? "Reporting..." : "Confirm"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }
