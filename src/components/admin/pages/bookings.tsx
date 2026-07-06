@@ -80,13 +80,14 @@ export function AdminBookingsPage() {
                 <TableHead>Cleaner</TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Photos</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
               ) : bookings.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No bookings</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No bookings</TableCell></TableRow>
               ) : (
                 bookings.map((b) => (
                   <TableRow key={b.id} className="hover:bg-muted/50">
@@ -95,6 +96,19 @@ export function AdminBookingsPage() {
                     <TableCell className="text-sm">{b.cleaner?.user.name || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
                     <TableCell className="text-sm"><p>{formatDate(b.date)}</p><p className="text-xs text-muted-foreground">{b.timeSlot}</p></TableCell>
                     <TableCell><StatusBadge status={b.status} /></TableCell>
+                    <TableCell>
+                      {b.photos && b.photos.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap w-max max-w-[120px]">
+                          {b.photos.sort((p1: any, p2: any) => p1.position - p2.position).map((photo: any) => (
+                            <div key={photo.id} className="h-8 w-8 rounded overflow-hidden cursor-pointer hover:opacity-80 border bg-muted" onClick={() => window.open(photo.imageData, '_blank')}>
+                              <img src={photo.imageData} alt="Wash" className="h-full w-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -120,6 +134,16 @@ export function AdminBookingsPage() {
                  <p>{formatDate(b.date)} · {b.timeSlot}</p>
                  <p>Cleaner: {b.cleaner?.user.name || "Unassigned"}</p>
                </div>
+               
+               {b.photos && b.photos.length > 0 && (
+                 <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-premium">
+                   {b.photos.sort((p1: any, p2: any) => p1.position - p2.position).map((photo: any) => (
+                     <div key={photo.id} className="h-12 w-12 shrink-0 rounded-md overflow-hidden border bg-muted">
+                       <img src={photo.imageData} alt="Wash" className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(photo.imageData, '_blank')} />
+                     </div>
+                   ))}
+                 </div>
+               )}
              </CardContent>
            </Card>
          ))

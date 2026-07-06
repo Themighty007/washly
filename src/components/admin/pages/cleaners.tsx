@@ -195,7 +195,22 @@ function CleanerDetailDrawer({ cleaner, onClose, onRefresh }: any) {
                     <p className="text-sm font-medium">{b.customer.user.name}</p>
                     <StatusBadge status={b.status} />
                   </div>
-                  <p className="text-xs text-muted-foreground">{formatDate(b.date)} · {b.timeSlot}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{formatDate(b.date)} · {b.timeSlot}</p>
+                  
+                  {b.photos && b.photos.length > 0 && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-premium">
+                      {b.photos.sort((p1: any, p2: any) => p1.position - p2.position).map((photo: any) => (
+                        <div key={photo.id} className="h-14 w-14 shrink-0 rounded-md overflow-hidden border bg-muted">
+                          <img 
+                            src={photo.imageData} 
+                            alt="Wash" 
+                            className="h-full w-full object-cover cursor-pointer hover:opacity-80 transition-opacity" 
+                            onClick={() => window.open(photo.imageData, '_blank')} 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

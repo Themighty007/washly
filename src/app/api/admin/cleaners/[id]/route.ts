@@ -16,7 +16,7 @@ export async function GET(
     include: {
       user: true,
       bookings: {
-        include: { customer: { include: { user: true } }, car: true },
+        include: { customer: { include: { user: true } }, car: true, photos: true },
         orderBy: { date: "desc" },
         take: 30,
       },
