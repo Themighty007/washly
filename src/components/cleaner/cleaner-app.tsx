@@ -42,6 +42,10 @@ export function CleanerApp() {
   const loadData = useCallback(async () => {
     try {
       const res = await authFetch("/api/cleaner/dashboard");
+      if (res.status === 401 || res.status === 404) {
+        logout();
+        return;
+      }
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
       setData(json);

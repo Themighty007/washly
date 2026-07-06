@@ -72,6 +72,10 @@ export function CustomerApp() {
   const loadData = useCallback(async () => {
     try {
       const res = await authFetch("/api/customer/dashboard");
+      if (res.status === 401 || res.status === 404) {
+        logout();
+        return;
+      }
       if (!res.ok) throw new Error("Failed to load");
       const json = await res.json();
       setData(json);
