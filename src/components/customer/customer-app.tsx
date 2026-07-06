@@ -288,7 +288,7 @@ function HomeTab({ customer, upcomingBookings, totalWashes, usedWashes, onSelect
         <Card className="shadow-premium">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-1.5">
-              <Calendar className="h-4 w-4 text-brand" />
+              <CalIcon className="h-4 w-4 text-brand" />
               <span className="text-xs text-muted-foreground">Upcoming</span>
             </div>
             <p className="text-2xl font-semibold">{upcomingBookings.length}</p>
@@ -319,7 +319,7 @@ function HomeTab({ customer, upcomingBookings, totalWashes, usedWashes, onSelect
         {upcomingBookings.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">
-              <Calendar className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+              <CalIcon className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm font-medium">No upcoming washes</p>
               <p className="text-xs text-muted-foreground mt-1">Your scheduled washes will appear here.</p>
             </CardContent>
