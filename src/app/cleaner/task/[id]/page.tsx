@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, authFetch } from "@/lib/auth-store";
+import { authFetch, useAuth } from "@/lib/auth-store";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,13 +23,13 @@ import {
   AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-export default function TaskDetailsPage({ params }: { params: { id: string } }) {
+export default function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { user } = useAuth();
+  const { id } = use(params);
   
   const [task, setTask] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,19 +49,19 @@ export default function TaskDetailsPage({ params }: { params: { id: string } }) 
     }
 
     loadTask();
-  }, [user, router, params.id]);
+  }, [user, router, id]);
 
   async function loadTask() {
     setLoading(true);
     try {
-      const res = await authFetch(`/api/cleaner/task/${params.id}`);
+      const res = await authFetch(`/api/cleaner/task/${id}`);
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error || "Failed to load task");
         router.push("/cleaner");
         return;
       }
-      setTask(data.task);
+      setTask(data.booking || data.task);
     } catch (e) {
       console.error(e);
       toast.error("Network error");
