@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-store";
-import { WashlyLogo } from "@/components/shared/washly-logo";
+import { IdrottLogo } from "@/components/shared/idrott-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +68,7 @@ export function LoginScreen() {
         <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-[oklch(0.78_0.15_75)] opacity-20 blur-3xl" />
 
         <div className="relative z-10 flex-1 flex flex-col">
-          <WashlyLogo size="md" variant="light" />
+          <IdrottLogo size="md" variant="light" />
 
           <div className="flex-1 flex flex-col justify-center max-w-md mt-12 lg:mt-0">
             <motion.div
@@ -112,7 +112,7 @@ export function LoginScreen() {
           </div>
 
           <div className="relative z-10 mt-8 text-xs text-white/40">
-            © 2026 Washly. Crafted for premium car care.
+            © 2026 THE IDROTT. Crafted for premium car care.
           </div>
         </div>
       </div>
@@ -221,7 +221,7 @@ export function LoginScreen() {
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground pt-2">
-                  Demo: admin@washly.com / admin123 · priya@gmail.com / customer123 · rajesh@washly.com / cleaner123
+                  Demo: admin@theidrott.com / admin123 · priya@gmail.com / customer123 · rajesh@theidrott.com / cleaner123
                 </p>
               </form>
             </TabsContent>

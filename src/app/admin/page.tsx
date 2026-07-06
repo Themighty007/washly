@@ -3,21 +3,23 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
-import { LoginScreen } from "@/components/shared/login-screen";
+import { AdminApp } from "@/components/admin/admin-app";
 
-export default function Home() {
+export default function AdminPage() {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (!user) {
+      router.replace("/");
+    } else if (user.role !== "ADMIN") {
       router.replace(`/${user.role.toLowerCase()}`);
     }
   }, [user, router]);
 
-  if (user) {
-    return null; // Let the useEffect redirect
+  if (!user || user.role !== "ADMIN") {
+    return null;
   }
 
-  return <LoginScreen />;
+  return <AdminApp />;
 }

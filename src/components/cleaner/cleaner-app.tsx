@@ -22,7 +22,7 @@ import {
   CheckCircle2, Camera, LogIn, LogOut, Navigation, AlertTriangle, X,
   Upload, Star, Calendar as CalIcon, Timer,
 } from "lucide-react";
-import { WashlyLogo } from "@/components/shared/washly-logo";
+import { IdrottLogo } from "@/components/shared/idrott-logo";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { formatTime, getInitials, isToday, TIME_SLOTS } from "@/lib/format";
@@ -76,7 +76,7 @@ export function CleanerApp() {
     <div className="mobile-shell flex flex-col bg-gradient-to-b from-muted/30 to-background">
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b">
         <div className="px-4 py-3 flex items-center justify-between">
-          <WashlyLogo size="sm" />
+          <IdrottLogo size="sm" />
           <NotificationBell />
         </div>
       </header>

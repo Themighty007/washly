@@ -27,7 +27,7 @@ import {
   CheckCircle2, Camera, ArrowRight, Star, ArrowLeft, LogOut, CreditCard,
   Plus, Minus, Crown, Settings,
 } from "lucide-react";
-import { WashlyLogo } from "@/components/shared/washly-logo";
+import { IdrottLogo } from "@/components/shared/idrott-logo";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { formatCurrency, formatDate, formatTime, getInitials, isToday, TIME_SLOTS } from "@/lib/format";
@@ -107,7 +107,7 @@ export function CustomerApp() {
       {/* Top bar */}
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-lg border-b">
         <div className="px-4 py-3 flex items-center justify-between">
-          <WashlyLogo size="sm" />
+          <IdrottLogo size="sm" />
           <div className="flex items-center gap-1">
             <NotificationBell />
           </div>

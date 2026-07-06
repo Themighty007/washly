@@ -83,19 +83,19 @@ async function main() {
   // ============= 2. CREATE ADMIN USER =============
   const adminUser = await db.user.create({
     data: {
-      email: "admin@washly.com",
+      email: "admin@theidrott.com",
       password: "admin123",
       name: "Admin User",
       phone: "+919999999999",
       role: "ADMIN",
-      address: "Washly HQ, Mumbai",
+      address: "THE IDROTT HQ, Mumbai",
     },
   });
 
   // ============= 3. CREATE CLEANERS =============
   const cleanerUsers = [
     {
-      email: "rajesh@washly.com",
+      email: "rajesh@theidrott.com",
       password: "cleaner123",
       name: "Rajesh Kumar",
       phone: "+919876543210",
@@ -104,7 +104,7 @@ async function main() {
       vehicleNumber: "MH02AB1234",
     },
     {
-      email: "suresh@washly.com",
+      email: "suresh@theidrott.com",
       password: "cleaner123",
       name: "Suresh Patel",
       phone: "+919876543211",
@@ -113,7 +113,7 @@ async function main() {
       vehicleNumber: "MH02CD5678",
     },
     {
-      email: "amit@washly.com",
+      email: "amit@theidrott.com",
       password: "cleaner123",
       name: "Amit Sharma",
       phone: "+919876543212",
@@ -472,9 +472,8 @@ async function main() {
 
   console.log("\n🎉 Seeding complete!");
   console.log("\n📋 Demo accounts:");
-  console.log("  Admin:    admin@washly.com / admin123");
-  console.log("  Customer: priya@gmail.com / customer123");
-  console.log("  Cleaner:  rajesh@washly.com / cleaner123");
+  console.log("  Admin:    admin@theidrott.com / admin123");
+  console.log("  Cleaner:  rajesh@theidrott.com / cleaner123");
 }
 
 main()

@@ -2,7 +2,7 @@
 import { db } from "@/lib/db";
 import type { SessionUser, Role } from "@/lib/types";
 
-const SECRET = "washly-secret-key-2026";
+const SECRET = "theidrott-secret-key-2026";
 
 // Simple base64url encode/decode with HMAC-like signature
 function sign(payload: string): string {

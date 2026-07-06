@@ -26,7 +26,7 @@ export function AdminSettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Company Name</p>
-              <p className="text-xs text-muted-foreground">Washly Premium Car Care</p>
+              <p className="text-xs text-muted-foreground">THE IDROTT Premium Car Care</p>
             </div>
             <Button variant="outline" size="sm">Edit</Button>
           </div>
@@ -122,7 +122,7 @@ export function AdminSettingsPage() {
         <CardContent className="p-5 flex items-center gap-3">
           <Crown className="h-5 w-5" style={{ color: "var(--gold)" }} />
           <div className="flex-1">
-            <p className="text-sm font-medium">Washly Premium Plan</p>
+            <p className="text-sm font-medium">THE IDROTT Premium Plan</p>
             <p className="text-xs text-muted-foreground">Unlimited customers, cleaners, and washes. Premium support included.</p>
           </div>
           <Badge style={{ background: "var(--gold)", color: "white" }} className="border-0">Active</Badge>
@@ -130,7 +130,7 @@ export function AdminSettingsPage() {
       </Card>
 
       <p className="text-center text-xs text-muted-foreground">
-        Washly v1.0 · © 2026 · Built for premium car care operations
+        THE IDROTT v1.0 · © 2026 · Built for premium car care operations
       </p>
     </div>
   );

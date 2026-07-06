@@ -3,21 +3,23 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
-import { LoginScreen } from "@/components/shared/login-screen";
+import { CustomerApp } from "@/components/customer/customer-app";
 
-export default function Home() {
+export default function CustomerPage() {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (!user) {
+      router.replace("/");
+    } else if (user.role !== "CUSTOMER") {
       router.replace(`/${user.role.toLowerCase()}`);
     }
   }, [user, router]);
 
-  if (user) {
-    return null; // Let the useEffect redirect
+  if (!user || user.role !== "CUSTOMER") {
+    return null; // Or a loading spinner
   }
 
-  return <LoginScreen />;
+  return <CustomerApp />;
 }

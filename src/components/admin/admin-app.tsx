@@ -14,7 +14,7 @@ import {
   CreditCard, TrendingUp, Crown, FileBarChart, Settings, LogOut,
   Bell, Search, ChevronRight, Sparkles,
 } from "lucide-react";
-import { WashlyLogo } from "@/components/shared/washly-logo";
+import { IdrottLogo } from "@/components/shared/idrott-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,7 @@ export function AdminApp() {
       {/* Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-40">
         <div className="p-5 border-b border-sidebar-border">
-          <WashlyLogo size="sm" variant="light" />
+          <IdrottLogo size="sm" variant="light" />
         </div>
 
         <ScrollArea className="flex-1 px-3 py-4">
@@ -117,7 +117,7 @@ export function AdminApp() {
 
       {/* Mobile top bar */}
       <header className="lg:hidden sticky top-0 z-30 bg-background border-b px-4 py-3 flex items-center justify-between">
-        <WashlyLogo size="sm" />
+        <IdrottLogo size="sm" />
         <NotificationBell />
       </header>
 

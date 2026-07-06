@@ -1,7 +1,7 @@
 // Premium brand logo component
 import { cn } from "@/lib/utils";
 
-export function WashlyLogo({
+export function IdrottLogo({
   className,
   size = "md",
   variant = "default",
@@ -53,7 +53,7 @@ export function WashlyLogo({
           variant === "light" ? "text-white" : "text-foreground"
         )}
       >
-        Washly
+        THE IDROTT
       </span>
     </div>
   );

@@ -28,7 +28,7 @@ export const useAuth = create<AuthState>()(
       login: (user, token) => set({ user, token }),
       logout: () => set({ user: null, token: null }),
     }),
-    { name: "washly-auth" }
+    { name: "theidrott-auth" }
   )
 );
 

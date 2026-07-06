@@ -3,21 +3,23 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-store";
-import { LoginScreen } from "@/components/shared/login-screen";
+import { CleanerApp } from "@/components/cleaner/cleaner-app";
 
-export default function Home() {
+export default function CleanerPage() {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    if (!user) {
+      router.replace("/");
+    } else if (user.role !== "CLEANER") {
       router.replace(`/${user.role.toLowerCase()}`);
     }
   }, [user, router]);
 
-  if (user) {
-    return null; // Let the useEffect redirect
+  if (!user || user.role !== "CLEANER") {
+    return null;
   }
 
-  return <LoginScreen />;
+  return <CleanerApp />;
 }

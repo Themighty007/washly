@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Washly — Premium Car Wash Management",
-  description: "Subscription-based car wash ecosystem for customers, cleaners, and admins.",
-  keywords: ["car wash", "subscription", "SaaS", "Washly"],
+  title: "THE IDROTT — Premium Car Wash Management",
+  description: "A complete management platform connecting customers, cleaners, and operations.",
+  keywords: ["car wash", "subscription", "SaaS", "THE IDROTT"],
   icons: {
     icon: "/logo.svg",
   },

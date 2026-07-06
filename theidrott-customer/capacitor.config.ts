@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.washly.cleaner',
-  appName: 'Washly Cleaner',
+  appId: 'com.theidrott.customer',
+  appName: 'THE IDROTT Customer',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
