@@ -96,6 +96,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
     console.error("Attendance API Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    
+    // Check if it's a Prisma read-only error
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("readonly database") || msg.includes("read-only")) {
+      return NextResponse.json({ 
+        error: "Vercel SQLite read-only error. Database writes disabled." 
+      }, { status: 403 });
+    }
+
+    return NextResponse.json({ error: "Internal Server Error: " + msg }, { status: 500 });
   }
 }
