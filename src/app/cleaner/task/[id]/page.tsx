@@ -343,7 +343,7 @@ function UploadPhotosModal({ task, onClose, onSuccess }: any) {
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 p-5">
+        <div className="flex-1 overflow-y-auto p-5 scrollbar-premium">
           <div className="space-y-4">
             {/* Progress */}
             <div className="flex items-center gap-3 p-3.5 rounded-xl bg-muted/50 border border-muted">
@@ -378,7 +378,7 @@ function UploadPhotosModal({ task, onClose, onSuccess }: any) {
                       ) : (
                         <button
                           onClick={() => fileInputs.current[pos]?.click()}
-                          className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground"
+                          className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground w-full h-full"
                         >
                           <div className="h-10 w-10 rounded-full bg-background shadow-sm flex items-center justify-center mb-2">
                             <Upload className="h-4 w-4" />
@@ -408,7 +408,7 @@ function UploadPhotosModal({ task, onClose, onSuccess }: any) {
               })}
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="p-4 border-t bg-background">
           <Button
