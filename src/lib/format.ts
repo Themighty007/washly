@@ -23,9 +23,9 @@ export function formatRelative(date: string | Date): string {
   const absDiff = Math.abs(diff);
 
   if (absDiff < 60) return "just now";
-  if (absDiff < 3600) return `${Math.floor(absDiff / 60)}m ${diff > 0 ? "ago" : "ago"}`;
-  if (absDiff < 86400) return `${Math.floor(absDiff / 3600)}h ${diff > 0 ? "ago" : "ago"}`;
-  if (absDiff < 604800) return `${Math.floor(absDiff / 86400)}d ${diff > 0 ? "ago" : "ago"}`;
+  if (absDiff < 3600) return `${Math.floor(absDiff / 60)}m ${diff > 0 ? "ago" : "from now"}`;
+  if (absDiff < 86400) return `${Math.floor(absDiff / 3600)}h ${diff > 0 ? "ago" : "from now"}`;
+  if (absDiff < 604800) return `${Math.floor(absDiff / 86400)}d ${diff > 0 ? "ago" : "from now"}`;
   return formatDate(d);
 }
 
