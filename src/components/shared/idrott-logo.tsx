@@ -1,60 +1,88 @@
-// Premium brand logo component
+// Premium brand logo component - 4K SVG Version
 import { cn } from "@/lib/utils";
 
 export function IdrottLogo({
   className,
   size = "md",
-  variant = "default",
 }: {
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
-  variant?: "default" | "light";
 }) {
   const sizes = {
-    sm: "h-7 w-7",
-    md: "h-10 w-10",
-    lg: "h-14 w-14",
-    xl: "h-20 w-20",
-  };
-  const textSizes = {
-    sm: "text-base",
-    md: "text-xl",
-    lg: "text-2xl",
-    xl: "text-4xl",
+    sm: "h-8",
+    md: "h-12",
+    lg: "h-20",
+    xl: "h-32",
   };
 
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <div
-        className={cn(
-          "relative flex items-center justify-center rounded-xl brand-gradient shadow-premium",
-          sizes[size]
-        )}
+    <div className={cn("flex items-center justify-center", sizes[size], className)}>
+      <svg
+        viewBox="0 0 300 260"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-full w-auto"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-1/2 w-1/2 text-white"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 13l1.5-5h11L19 13M5 13h14M5 13v4a1 1 0 001 1h12a1 1 0 001-1v-4" />
-          <circle cx="8" cy="17" r="1.5" fill="currentColor" stroke="none" />
-          <circle cx="16" cy="17" r="1.5" fill="currentColor" stroke="none" />
-          <path d="M7 8l1-2M11 8l1-2M15 8l1-2" opacity="0.6" />
-        </svg>
-      </div>
-      <span
-        className={cn(
-          "font-semibold tracking-tight",
-          textSizes[size],
-          variant === "light" ? "text-white" : "text-foreground"
-        )}
-      >
-        THE IDROTT
-      </span>
+        {/* Background is transparent, shapes use currentColor or exact colors */}
+        <g transform="translate(0, -10)">
+          {/* D Outer Curve */}
+          <path
+            d="M 120 30 C 250 30, 250 170, 120 170 L 120 150 C 220 150, 220 50, 120 50 Z"
+            fill="#FFE700"
+          />
+          {/* D Left Solid Bar */}
+          <rect x="100" y="30" width="30" height="140" fill="#FFE700" rx="2" />
+          
+          {/* Negative Space Cutouts for the 'i' and stairs */}
+          {/* Use standard black for light mode fallback, but ideal is background color */}
+          <g className="fill-background" style={{ fill: "var(--background, #000)" }}>
+            {/* Dot of the 'i' */}
+            <circle cx="115" cy="65" r="7" />
+            {/* Stairs going down */}
+            <path d="M 105 90 L 115 90 L 115 110 L 125 110 L 125 130 L 131 130 L 131 170 L 105 170 Z" />
+          </g>
+
+          {/* THE Box */}
+          <rect x="50" y="190" width="65" height="30" fill="#FFE700" />
+          <text
+            x="54"
+            y="213"
+            className="fill-background"
+            style={{ fill: "var(--background, #000)" }}
+            fontFamily="system-ui, sans-serif"
+            fontWeight="900"
+            fontSize="20"
+            letterSpacing="0.5"
+          >
+            THE
+          </text>
+
+          {/* iDROTT Text */}
+          <text
+            x="122"
+            y="215"
+            fill="#FFE700"
+            fontFamily="system-ui, sans-serif"
+            fontSize="28"
+            letterSpacing="1"
+          >
+            i<tspan fontWeight="900">DROTT</tspan>
+          </text>
+
+          {/* Tagline */}
+          <text
+            x="150"
+            y="245"
+            fill="#A1A1AA"
+            fontFamily="cursive, sans-serif"
+            fontSize="13"
+            textAnchor="middle"
+            fontStyle="italic"
+          >
+            Not From Since, It's The Future
+          </text>
+        </g>
+      </svg>
     </div>
   );
 }

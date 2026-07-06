@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
@@ -62,11 +63,11 @@ interface CustomerData {
 }
 
 export function CustomerApp() {
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
   const [data, setData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
-  const [showPlanChange, setShowPlanChange] = useState(false);
   const { user, logout } = useAuth();
 
   const loadData = useCallback(async () => {
@@ -161,7 +162,7 @@ export function CustomerApp() {
               <ProfileTab
                 customer={customer}
                 totalWashes={totalWashes}
-                onShowPlanChange={() => setShowPlanChange(true)}
+                onShowPlanChange={() => router.push("/customer/packages")}
                 onLogout={logout}
               />
             </motion.div>
