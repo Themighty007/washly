@@ -187,18 +187,6 @@ export function CustomerApp() {
           onRefresh={loadData}
         />
       )}
-
-      {showPlanChange && (
-        <PlanChangeModal
-          currentPlanId={customer.activePlan?.id}
-          onClose={() => setShowPlanChange(false)}
-          onSuccess={() => {
-            setShowPlanChange(false);
-            loadData();
-            toast.success("Plan change request submitted!");
-          }}
-        />
-      )}
     </div>
   );
 }
