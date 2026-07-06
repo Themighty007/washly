@@ -567,7 +567,7 @@ function TaskDetailsModal({ task, onClose, onStartWash, onComplete, onNotAvailab
           </div>
         </ScrollArea>
 
-        <DialogFooter className="flex-col gap-2">
+        <DialogFooter className="flex-col gap-2 p-4 border-t bg-background">
           {!isCompleted && !isMissed && (
             <>
               {!isInProgress && (

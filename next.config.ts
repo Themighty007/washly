@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/**/*": ["./prisma/db/**/*"],
+    },
+  },
 };
 
 export default nextConfig;
