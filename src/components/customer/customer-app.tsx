@@ -607,7 +607,7 @@ function WashDetailsModal({ booking, onClose, onRefresh }: { booking: any; onClo
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="flex-1 -mx-6 px-6 overflow-y-auto">
           <div className="space-y-4 pb-2">
             {/* Car info */}
             <Card>
@@ -701,7 +701,7 @@ function WashDetailsModal({ booking, onClose, onRefresh }: { booking: any; onClo
               </Card>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter>
           {!isPast && (
