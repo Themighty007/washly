@@ -31,7 +31,9 @@ export async function GET(req: NextRequest) {
     take: 100,
   });
 
-  return NextResponse.json({ bookings });
+  const res = NextResponse.json({ bookings });
+  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return res;
 }
 
 // POST /api/admin/bookings - Create new booking (admin assigns cleaner)

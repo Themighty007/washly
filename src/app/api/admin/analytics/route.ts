@@ -33,101 +33,99 @@ export async function GET(req: NextRequest) {
       break;
   }
 
-  // Counts
-  const totalCustomers = await db.customer.count();
-  const activeCustomers = await db.customer.count({ where: { status: "ACTIVE" } });
-  const totalCleaners = await db.cleaner.count();
-  const activeCleaners = await db.cleaner.count({ where: { status: "ACTIVE" } });
-
-  // Washes within range
-  const completedWashes = await db.booking.count({
-    where: { status: "COMPLETED", completedAt: { gte: startDate, lte: endDate } },
-  });
-  const pendingWashes = await db.booking.count({
-    where: { status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] } },
-  });
-  const missedWashes = await db.booking.count({
-    where: { status: "MISSED", updatedAt: { gte: startDate, lte: endDate } },
-  });
-
-  // Revenue within range (paid payments)
-  const paidPayments = await db.payment.findMany({
-    where: { status: "PAID", paidAt: { gte: startDate, lte: endDate } },
-  });
-  const revenue = paidPayments.reduce((sum, p) => sum + p.amount, 0);
-
-  // Yearly revenue
   const yearStart = new Date(new Date().getFullYear(), 0, 1);
-  const yearlyPayments = await db.payment.findMany({
-    where: { status: "PAID", paidAt: { gte: yearStart } },
-  });
+
+  // ─── Run ALL top-level queries in PARALLEL (was 10+ sequential) ───
+  const [
+    totalCustomers,
+    activeCustomers,
+    totalCleaners,
+    activeCleaners,
+    completedWashes,
+    pendingWashes,
+    missedWashes,
+    activePlans,
+    paidPayments,
+    yearlyPayments,
+    recentActivity,
+    plans,
+    allBookings,
+  ] = await Promise.all([
+    db.customer.count(),
+    db.customer.count({ where: { status: "ACTIVE" } }),
+    db.cleaner.count(),
+    db.cleaner.count({ where: { status: "ACTIVE" } }),
+    db.booking.count({ where: { status: "COMPLETED", completedAt: { gte: startDate, lte: endDate } } }),
+    db.booking.count({ where: { status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] } } }),
+    db.booking.count({ where: { status: "MISSED", updatedAt: { gte: startDate, lte: endDate } } }),
+    db.customer.count({ where: { status: "ACTIVE", activePlanId: { not: null } } }),
+    db.payment.findMany({ where: { status: "PAID", paidAt: { gte: startDate, lte: endDate } }, select: { amount: true } }),
+    db.payment.findMany({ where: { status: "PAID", paidAt: { gte: yearStart } }, select: { amount: true } }),
+    db.notification.findMany({ orderBy: { createdAt: "desc" }, take: 10, include: { user: true } }),
+    db.plan.findMany({ select: { id: true, name: true } }),
+    // Fetch all bookings and payments in range needed for charts in ONE query each
+    db.booking.findMany({
+      where: { date: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1) } },
+      select: { status: true, completedAt: true, updatedAt: true, date: true },
+    }),
+  ]);
+
+  const revenue = paidPayments.reduce((sum, p) => sum + p.amount, 0);
   const yearlyRevenue = yearlyPayments.reduce((sum, p) => sum + p.amount, 0);
 
-  // Active plans count (customers with active subscription)
-  const activePlans = await db.customer.count({
-    where: { status: "ACTIVE", activePlanId: { not: null } },
-  });
+  // ─── Run remaining chart queries in PARALLEL ───
+  const [allChartPayments, allCustomerCounts, planCustomerCounts] = await Promise.all([
+    db.payment.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 5, 1) },
+      },
+      select: { amount: true, paidAt: true },
+    }),
+    // Get customer created dates for growth chart
+    db.customer.findMany({
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    // Plan distribution counts in parallel
+    Promise.all(
+      plans.map((plan) =>
+        db.customer.count({ where: { activePlanId: plan.id } }).then((count) => ({ name: plan.name, customers: count }))
+      )
+    ),
+  ]);
 
-  // ============= CHART DATA =============
-  // 1. Revenue chart - last 6 months
+  // ─── Build chart data from fetched data (no more per-month DB queries) ───
   const revenueChart: { month: string; revenue: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth() - i, 1);
-    const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() - i + 1, 0, 23, 59, 59, 999);
-    const monthPayments = await db.payment.findMany({
-      where: { status: "PAID", paidAt: { gte: monthStart, lte: monthEnd } },
-    });
-    revenueChart.push({
-      month: monthStart.toLocaleString("default", { month: "short" }),
-      revenue: monthPayments.reduce((s, p) => s + p.amount, 0),
-    });
-  }
-
-  // 2. Customer growth chart - last 6 months
   const customerGrowth: { month: string; customers: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() - i + 1, 0, 23, 59, 59, 999);
-    const count = await db.customer.count({
-      where: { createdAt: { lte: monthEnd } },
-    });
-    customerGrowth.push({
-      month: new Date(new Date().getFullYear(), new Date().getMonth() - i, 1).toLocaleString("default", { month: "short" }),
-      customers: count,
-    });
-  }
-
-  // 3. Wash completion chart - last 6 months
   const washCompletion: { month: string; completed: number; missed: number }[] = [];
+
   for (let i = 5; i >= 0; i--) {
     const monthStart = new Date(new Date().getFullYear(), new Date().getMonth() - i, 1);
     const monthEnd = new Date(new Date().getFullYear(), new Date().getMonth() - i + 1, 0, 23, 59, 59, 999);
-    const [completed, missed] = await Promise.all([
-      db.booking.count({ where: { status: "COMPLETED", completedAt: { gte: monthStart, lte: monthEnd } } }),
-      db.booking.count({ where: { status: "MISSED", updatedAt: { gte: monthStart, lte: monthEnd } } }),
-    ]);
-    washCompletion.push({
-      month: monthStart.toLocaleString("default", { month: "short" }),
-      completed,
-      missed,
-    });
+    const label = monthStart.toLocaleString("default", { month: "short" });
+
+    // Revenue from pre-fetched payments
+    const monthRevenue = allChartPayments
+      .filter((p) => p.paidAt && p.paidAt >= monthStart && p.paidAt <= monthEnd)
+      .reduce((s, p) => s + p.amount, 0);
+    revenueChart.push({ month: label, revenue: monthRevenue });
+
+    // Customer growth from pre-fetched customers
+    const custCount = allCustomerCounts.filter((c) => c.createdAt <= monthEnd).length;
+    customerGrowth.push({ month: label, customers: custCount });
+
+    // Wash completion from pre-fetched bookings
+    const monthCompleted = allBookings.filter(
+      (b) => b.status === "COMPLETED" && b.completedAt && b.completedAt >= monthStart && b.completedAt <= monthEnd
+    ).length;
+    const monthMissed = allBookings.filter(
+      (b) => b.status === "MISSED" && b.updatedAt >= monthStart && b.updatedAt <= monthEnd
+    ).length;
+    washCompletion.push({ month: label, completed: monthCompleted, missed: monthMissed });
   }
 
-  // 4. Plan distribution
-  const plans = await db.plan.findMany();
-  const planDistribution: { name: string; customers: number }[] = [];
-  for (const plan of plans) {
-    const count = await db.customer.count({ where: { activePlanId: plan.id } });
-    planDistribution.push({ name: plan.name, customers: count });
-  }
-
-  // Recent activity (last 10 notifications)
-  const recentActivity = await db.notification.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    include: { user: true },
-  });
-
-  return NextResponse.json({
+  const response = NextResponse.json({
     range,
     startDate,
     endDate,
@@ -147,8 +145,12 @@ export async function GET(req: NextRequest) {
       revenueChart,
       customerGrowth,
       washCompletion,
-      planDistribution,
+      planDistribution: planCustomerCounts,
     },
     recentActivity,
   });
+
+  // Cache analytics for 30 seconds in the browser — private so it's per-user
+  response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return response;
 }

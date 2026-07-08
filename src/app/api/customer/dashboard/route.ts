@@ -19,33 +19,32 @@ export async function GET(req: NextRequest) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const upcomingBookings = await db.booking.findMany({
-    where: {
-      customerId: customer.id,
-      date: { gte: startOfToday },
-      status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] },
-    },
-    include: { car: true, cleaner: { include: { user: true } } },
-    orderBy: { date: "asc" },
-  });
-
-  const pastBookings = await db.booking.findMany({
-    where: {
-      customerId: customer.id,
-      status: { in: ["COMPLETED", "MISSED", "CANCELLED"] },
-    },
-    include: { car: true, cleaner: { include: { user: true } }, photos: true },
-    orderBy: { date: "desc" },
-    take: 20,
-  });
-
-  const unreadNotifications = await db.notification.count({
-    where: { userId: user.id, isRead: false },
-  });
+  // Run all queries in PARALLEL
+  const [upcomingBookings, pastBookings, unreadNotifications] = await Promise.all([
+    db.booking.findMany({
+      where: {
+        customerId: customer.id,
+        date: { gte: startOfToday },
+        status: { in: ["PENDING", "ASSIGNED", "IN_PROGRESS"] },
+      },
+      include: { car: true, cleaner: { include: { user: true } } },
+      orderBy: { date: "asc" },
+    }),
+    db.booking.findMany({
+      where: {
+        customerId: customer.id,
+        status: { in: ["COMPLETED", "MISSED", "CANCELLED"] },
+      },
+      include: { car: true, cleaner: { include: { user: true } }, photos: true },
+      orderBy: { date: "desc" },
+      take: 20,
+    }),
+    db.notification.count({ where: { userId: user.id, isRead: false } }),
+  ]);
 
   const totalWashes = customer.activePlan?.totalWashes || 0;
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     customer: {
       id: customer.id,
       user: {
@@ -68,4 +67,6 @@ export async function GET(req: NextRequest) {
     totalWashes,
     unreadNotifications,
   });
+  res.headers.set("Cache-Control", "private, max-age=20, stale-while-revalidate=40");
+  return res;
 }

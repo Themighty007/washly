@@ -18,18 +18,18 @@ export async function GET(req: NextRequest) {
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  // Today's tasks
-  const todaysTasks = await db.booking.findMany({
-    where: {
-      cleanerId: cleaner.id,
-      date: { gte: startOfToday, lte: endOfToday },
-    },
-    include: {
-      customer: { include: { user: true } },
-      car: true,
-    },
-    orderBy: { timeSlot: "asc" },
-  });
+  // Run all queries in PARALLEL
+  const [todaysTasks, todayAttendance, unreadNotifications] = await Promise.all([
+    db.booking.findMany({
+      where: { cleanerId: cleaner.id, date: { gte: startOfToday, lte: endOfToday } },
+      include: { customer: { include: { user: true } }, car: true },
+      orderBy: { timeSlot: "asc" },
+    }),
+    db.attendance.findFirst({
+      where: { cleanerId: cleaner.id, date: { gte: startOfToday, lte: endOfToday } },
+    }),
+    db.notification.count({ where: { userId: user.id, isRead: false } }),
+  ]);
 
   const completedToday = todaysTasks.filter((t) => t.status === "COMPLETED").length;
   const pendingToday = todaysTasks.filter(
@@ -37,19 +37,7 @@ export async function GET(req: NextRequest) {
   ).length;
   const missedToday = todaysTasks.filter((t) => t.status === "MISSED").length;
 
-  // Today's attendance
-  const todayAttendance = await db.attendance.findFirst({
-    where: {
-      cleanerId: cleaner.id,
-      date: { gte: startOfToday, lte: endOfToday },
-    },
-  });
-
-  const unreadNotifications = await db.notification.count({
-    where: { userId: user.id, isRead: false },
-  });
-
-  return NextResponse.json({
+  const res = NextResponse.json({
     cleaner: {
       id: cleaner.id,
       user: {
@@ -77,4 +65,6 @@ export async function GET(req: NextRequest) {
     todayAttendance,
     unreadNotifications,
   });
+  res.headers.set("Cache-Control", "private, max-age=20, stale-while-revalidate=40");
+  return res;
 }

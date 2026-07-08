@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const totalCollected = payments.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0);
   const overdueCount = payments.filter((p) => p.status === "OVERDUE").length;
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     payments,
     summary: {
       total: payments.length,
@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
       overdueCount,
     },
   });
+  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return res;
 }
 
 // PATCH /api/admin/payments - Mark payment as paid

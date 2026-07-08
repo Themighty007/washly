@@ -47,11 +47,12 @@ const NAV_ITEMS: { id: Page; label: string; icon: any }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-// Prefetch all critical admin pages in the background
+// Prefetch all critical admin pages in the background — fires immediately, runs in parallel
 function usePrefetchAll() {
   useEffect(() => {
     const PREFETCH_URLS: [string, string][] = [
       ["/api/admin/analytics?range=month", "admin:analytics:month"],
+      ["/api/admin/analytics?range=year", "admin:analytics:year"],
       ["/api/admin/customers", "admin:customers:"],
       ["/api/admin/cleaners", "admin:cleaners:"],
       ["/api/admin/bookings", "admin:bookings:all"],
@@ -59,21 +60,14 @@ function usePrefetchAll() {
       ["/api/admin/plans", "admin:plans"],
     ];
 
-    const run = () => {
-      for (const [url, key] of PREFETCH_URLS) {
-        if (!apiCache.getStale(key)) {
-          authFetch(url)
-            .then((r) => r.json())
-            .then((data) => apiCache.set(key, data))
-            .catch(() => {}); // silent — best effort
-        }
+    // Fire ALL prefetches immediately in parallel — no delay, no idle callback
+    for (const [url, key] of PREFETCH_URLS) {
+      if (!apiCache.getStale(key)) {
+        authFetch(url)
+          .then((r) => r.json())
+          .then((data) => apiCache.set(key, data))
+          .catch(() => {});
       }
-    };
-
-    if (typeof requestIdleCallback !== "undefined") {
-      requestIdleCallback(run);
-    } else {
-      setTimeout(run, 300);
     }
   }, []);
 }

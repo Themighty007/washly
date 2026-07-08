@@ -20,17 +20,29 @@ import { AlertTriangle, Phone, RefreshCw, Download, Calendar, Clock } from "luci
 import { authFetch, exportUrl } from "@/lib/auth-store";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate, TIME_SLOTS } from "@/lib/format";
+import { apiCache } from "@/lib/api-cache";
 
 export function AdminPendingWashesPage() {
-  const [pending, setPending] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState<any[]>(() => apiCache.getStale("admin:pending-washes")?.pendingWashes || []);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:pending-washes"));
   const [reschedule, setReschedule] = useState<any | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const cacheKey = "admin:pending-washes";
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setPending(cached.pendingWashes || []);
+      setLoading(false);
+      return;
+    }
+    if (cached) {
+      setPending(cached.pendingWashes || []);
+      setLoading(false);
+    }
     try {
       const res = await authFetch("/api/admin/pending-washes");
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setPending(data.pendingWashes || []);
     } catch (e) {
       console.error(e);

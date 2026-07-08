@@ -28,25 +28,38 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  // Today's task count per cleaner
+  // Today's task count — ONE query with groupBy instead of N queries
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
-  const cleanersWithTasks = await Promise.all(
-    cleaners.map(async (c) => {
-      const todaysTasks = await db.booking.count({
-        where: {
-          cleanerId: c.id,
-          date: { gte: startOfToday, lte: endOfToday },
-        },
-      });
-      return { ...c, todaysTasks };
-    })
-  );
+  const todaysBookingCounts = await db.booking.groupBy({
+    by: ["cleanerId"],
+    where: { date: { gte: startOfToday, lte: endOfToday }, cleanerId: { not: null } },
+    _count: { id: true },
+  });
 
-  return NextResponse.json({ cleaners: cleanersWithTasks });
+  const countMap = new Map(todaysBookingCounts.map((b) => [b.cleanerId, b._count.id]));
+
+  // Completed/rating in single queries
+  const completedCounts = await db.booking.groupBy({
+    by: ["cleanerId"],
+    where: { status: "COMPLETED", cleanerId: { not: null } },
+    _count: { id: true },
+  });
+  const completedMap = new Map(completedCounts.map((b) => [b.cleanerId, b._count.id]));
+
+  const cleanersWithTasks = cleaners.map((c) => ({
+    ...c,
+    todaysTasks: countMap.get(c.id) ?? 0,
+    totalCompleted: completedMap.get(c.id) ?? 0,
+    rating: c.rating ?? 0,
+  }));
+
+  const res = NextResponse.json({ cleaners: cleanersWithTasks });
+  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return res;
 }
 
 // POST /api/admin/cleaners - Create new cleaner

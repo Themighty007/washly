@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
       cleaner: { include: { user: true } },
     },
     orderBy: { updatedAt: "desc" },
+    take: 100,
   });
 
-  return NextResponse.json({ pendingWashes: pendingBookings });
+  const res = NextResponse.json({ pendingWashes: pendingBookings });
+  res.headers.set("Cache-Control", "private, max-age=15, stale-while-revalidate=30");
+  return res;
 }

@@ -14,25 +14,37 @@ import { Switch } from "@/components/ui/switch";
 import { Crown, Plus, Pencil, Trash2, Check } from "lucide-react";
 import { authFetch } from "@/lib/auth-store";
 import { formatCurrency } from "@/lib/format";
+import { apiCache } from "@/lib/api-cache";
 
 export function AdminPlansPage() {
-  const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<any[]>(() => apiCache.getStale("admin:plans")?.plans || []);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:plans"));
   const [showAdd, setShowAdd] = useState(false);
   const [editPlan, setEditPlan] = useState<any | null>(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = useCallback(async () => {
+    const cacheKey = "admin:plans";
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setPlans(cached.plans || []);
+      setLoading(false);
+      return;
+    }
+    if (cached) {
+      setPlans(cached.plans || []);
+      setLoading(false);
+    }
     try {
       const res = await authFetch("/api/admin/plans");
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setPlans(data.plans || []);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this plan?")) return;
@@ -41,7 +53,7 @@ export function AdminPlansPage() {
     load();
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading…</div>;
+  if (loading && plans.length === 0) return <div className="text-muted-foreground p-5">Loading plans…</div>;
 
   return (
     <div className="space-y-5">

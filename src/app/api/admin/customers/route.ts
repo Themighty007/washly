@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ customers });
+  const res = NextResponse.json({ customers });
+  res.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+  return res;
 }
 
 // POST /api/admin/customers - Create new customer

@@ -12,7 +12,9 @@ export async function GET(req: NextRequest) {
     include: { _count: { select: { customersWithPlan: true, subscriptionRequests: true } } },
   });
 
-  return NextResponse.json({ plans });
+  const res = NextResponse.json({ plans });
+  res.headers.set("Cache-Control", "private, max-age=60, stale-while-revalidate=120");
+  return res;
 }
 
 // POST /api/admin/plans - Create new plan
