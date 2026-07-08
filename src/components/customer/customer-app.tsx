@@ -66,8 +66,8 @@ interface CustomerData {
 export function CustomerApp() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
-  const [data, setData] = useState<CustomerData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<CustomerData | null>(() => apiCache.getStale<CustomerData>("customer:dashboard") || null);
+  const [loading, setLoading] = useState(!apiCache.getStale("customer:dashboard"));
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const { user, logout } = useAuth();
 
@@ -86,7 +86,10 @@ export function CustomerApp() {
         logout();
         return;
       }
-      if (!res.ok) throw new Error("Failed to load");
+      if (!res.ok) {
+        if (!cached) toast.error("Failed to load dashboard");
+        return;
+      }
       const json = await res.json();
       apiCache.set(cacheKey, json);
       setData(json);

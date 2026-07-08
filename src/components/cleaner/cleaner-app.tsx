@@ -28,8 +28,8 @@ type Tab = "home" | "profile";
 export function CleanerApp() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(() => apiCache.getStale("cleaner:dashboard"));
+  const [loading, setLoading] = useState(!apiCache.getStale("cleaner:dashboard"));
   const { logout } = useAuth();
 
   const loadData = useCallback(async () => {
@@ -47,7 +47,11 @@ export function CleanerApp() {
         logout();
         return;
       }
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        // API error — silently keep stale data if we have it, otherwise show error
+        if (!cached) toast.error("Failed to load dashboard");
+        return;
+      }
       const json = await res.json();
       apiCache.set(cacheKey, json);
       setData(json);
