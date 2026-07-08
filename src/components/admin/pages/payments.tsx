@@ -13,22 +13,33 @@ import {
 } from "@/components/ui/select";
 import { Download, CreditCard, IndianRupee, AlertCircle, CheckCircle2 } from "lucide-react";
 import { authFetch, exportUrl } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export function AdminPaymentsPage() {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [payments, setPayments] = useState<any[]>(() => apiCache.getStale<any>("admin:payments:all")?.payments || []);
+  const [summary, setSummary] = useState<any>(() => apiCache.getStale<any>("admin:payments:all")?.summary || null);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:payments:all"));
   const [statusFilter, setStatusFilter] = useState("all");
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    const cacheKey = `admin:payments:${statusFilter}`;
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setPayments(cached.payments || []);
+      setSummary(cached.summary);
+      setLoading(false);
+      return;
+    }
+    if (cached) { setPayments(cached.payments || []); setSummary(cached.summary); setLoading(false); }
+    else { setLoading(true); }
     try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "all") params.set("status", statusFilter);
       const res = await authFetch(`/api/admin/payments?${params}`);
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setPayments(data.payments || []);
       setSummary(data.summary);
     } catch (e) {
@@ -47,6 +58,7 @@ export function AdminPaymentsPage() {
     });
     if (res.ok) {
       toast.success("Marked as paid");
+      apiCache.invalidatePrefix("admin:payments:");
       load();
     }
   }

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -46,9 +47,42 @@ const NAV_ITEMS: { id: Page; label: string; icon: any }[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+// Prefetch all critical admin pages in the background
+function usePrefetchAll() {
+  useEffect(() => {
+    const PREFETCH_URLS: [string, string][] = [
+      ["/api/admin/analytics?range=month", "admin:analytics:month"],
+      ["/api/admin/customers", "admin:customers:"],
+      ["/api/admin/cleaners", "admin:cleaners:"],
+      ["/api/admin/bookings", "admin:bookings:all"],
+      ["/api/admin/payments", "admin:payments:all"],
+      ["/api/admin/plans", "admin:plans"],
+    ];
+
+    const run = () => {
+      for (const [url, key] of PREFETCH_URLS) {
+        if (!apiCache.getStale(key)) {
+          authFetch(url)
+            .then((r) => r.json())
+            .then((data) => apiCache.set(key, data))
+            .catch(() => {}); // silent — best effort
+        }
+      }
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(run);
+    } else {
+      setTimeout(run, 300);
+    }
+  }, []);
+}
+
 export function AdminApp() {
   const [page, setPage] = useState<Page>("dashboard");
   const { user, logout } = useAuth();
+
+  usePrefetchAll();
 
   return (
     <div className="min-h-screen flex bg-muted/30">

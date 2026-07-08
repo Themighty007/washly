@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,14 @@ export function CleanerApp() {
   const { logout } = useAuth();
 
   const loadData = useCallback(async () => {
+    const cacheKey = "cleaner:dashboard";
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setData(cached);
+      setLoading(false);
+      return;
+    }
+    if (cached) { setData(cached); setLoading(false); }
     try {
       const res = await authFetch("/api/cleaner/dashboard");
       if (res.status === 401 || res.status === 404) {
@@ -40,10 +49,11 @@ export function CleanerApp() {
       }
       if (!res.ok) throw new Error("Failed");
       const json = await res.json();
+      apiCache.set(cacheKey, json);
       setData(json);
     } catch (e) {
       console.error(e);
-      toast.error("Failed to load");
+      if (!cached) toast.error("Failed to load");
     } finally {
       setLoading(false);
     }

@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
       customer: { include: { user: true } },
       car: true,
       cleaner: { include: { user: true } },
-      photos: true,
     },
     orderBy: { date: "desc" },
     take: 100,

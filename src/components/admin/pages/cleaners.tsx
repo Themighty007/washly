@@ -23,23 +23,33 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Star, Search, Plus, Eye, Pencil, Trash2, Download, MapPin, Phone, Car, UserPlus } from "lucide-react";
 import { authFetch, exportUrl } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate, getInitials } from "@/lib/format";
 
 export function AdminCleanersPage() {
-  const [cleaners, setCleaners] = useState<any[]>([]);
+  const [cleaners, setCleaners] = useState<any[]>(() => apiCache.getStale<any>("admin:cleaners:")?.cleaners || []);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:cleaners:"));
   const [selected, setSelected] = useState<any | null>(null);
   const [showAdd, setShowAdd] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    const cacheKey = `admin:cleaners:${params}`;
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setCleaners(cached.cleaners || []);
+      setLoading(false);
+      return;
+    }
+    if (cached) { setCleaners(cached.cleaners || []); setLoading(false); }
+    else { setLoading(true); }
     try {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
       const res = await authFetch(`/api/admin/cleaners?${params}`);
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setCleaners(data.cleaners || []);
     } catch (e) {
       console.error(e);
@@ -53,7 +63,7 @@ export function AdminCleanersPage() {
   async function handleDelete(id: string) {
     if (!confirm("Delete this cleaner?")) return;
     const res = await authFetch(`/api/admin/cleaners/${id}`, { method: "DELETE" });
-    if (res.ok) { toast.success("Cleaner removed"); load(); }
+    if (res.ok) { toast.success("Cleaner removed"); apiCache.invalidatePrefix("admin:cleaners:"); load(); }
     else toast.error("Failed");
   }
 

@@ -6,16 +6,31 @@ import { Button } from "@/components/ui/button";
 import { IndianRupee, Download, TrendingUp, TrendingDown, Users, Calendar } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { authFetch, exportUrl } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { formatCurrency } from "@/lib/format";
 
 export function AdminRevenuePage() {
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(() => apiCache.getStale("admin:analytics:year"));
 
   useEffect(() => {
-    authFetch("/api/admin/analytics?range=year").then(async (res) => setAnalytics(await res.json()));
+    const cacheKey = "admin:analytics:year";
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) { setAnalytics(cached); return; }
+    authFetch("/api/admin/analytics?range=year").then(async (res) => {
+      const data = await res.json();
+      apiCache.set(cacheKey, data);
+      setAnalytics(data);
+    });
   }, []);
 
-  if (!analytics) return <div className="text-muted-foreground">Loading…</div>;
+  if (!analytics) return (
+    <div className="animate-pulse space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 bg-muted rounded-xl" />)}
+      </div>
+      <div className="h-64 bg-muted rounded-xl" />
+    </div>
+  );
 
   const { cards, charts } = analytics;
 

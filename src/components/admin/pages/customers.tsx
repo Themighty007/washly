@@ -27,27 +27,55 @@ import {
   CreditCard, Calendar, Download, Crown, UserPlus,
 } from "lucide-react";
 import { authFetch, exportUrl } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate, getInitials } from "@/lib/format";
 
+function TableSkeleton({ rows = 8, cols = 5 }: { rows?: number; cols?: number }) {
+  return (
+    <div className="animate-pulse space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex gap-4 p-3 rounded-lg bg-muted/50">
+          {Array.from({ length: cols }).map((_, j) => (
+            <div key={j} className="h-4 bg-muted rounded flex-1" />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AdminCustomersPage() {
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>(() => apiCache.getStale<any>("admin:customers:")?.customers || []);
+  const [plans, setPlans] = useState<any[]>(() => apiCache.getStale<any>("admin:plans")?.plans || []);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:customers:"));
   const [selected, setSelected] = useState<any | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState<any | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (planFilter !== "all") params.set("planId", planFilter);
+    const cacheKey = `admin:customers:${params}`;
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setCustomers(cached.customers || []);
+      setLoading(false);
+      return;
+    }
+    if (cached) {
+      setCustomers(cached.customers || []);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     try {
-      const params = new URLSearchParams();
-      if (search) params.set("search", search);
-      if (planFilter !== "all") params.set("planId", planFilter);
       const res = await authFetch(`/api/admin/customers?${params}`);
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setCustomers(data.customers || []);
     } catch (e) {
       console.error(e);
@@ -56,13 +84,15 @@ export function AdminCustomersPage() {
     }
   }, [search, planFilter]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
+    const cacheKey = "admin:plans";
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached) { setPlans(cached.plans || []); return; }
     authFetch("/api/admin/plans").then(async (res) => {
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setPlans(data.plans || []);
     });
   }, []);
@@ -72,6 +102,7 @@ export function AdminCustomersPage() {
     const res = await authFetch(`/api/admin/customers/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Customer deleted");
+      apiCache.invalidatePrefix("admin:customers:");
       load();
     } else {
       toast.error("Failed to delete");

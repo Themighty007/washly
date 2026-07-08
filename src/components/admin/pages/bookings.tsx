@@ -19,22 +19,32 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Download, Calendar, Clock, MapPin, User, Car, Star, RefreshCw } from "lucide-react";
 import { authFetch, exportUrl } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate, TIME_SLOTS } from "@/lib/format";
 
 export function AdminBookingsPage() {
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState<any[]>(() => apiCache.getStale<any>("admin:bookings:all")?.bookings || []);
+  const [loading, setLoading] = useState(!apiCache.getStale("admin:bookings:all"));
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    const params = new URLSearchParams();
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    const cacheKey = `admin:bookings:${statusFilter}`;
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached && !apiCache.isStale(cacheKey)) {
+      setBookings(cached.bookings || []);
+      setLoading(false);
+      return;
+    }
+    if (cached) { setBookings(cached.bookings || []); setLoading(false); }
+    else { setLoading(true); }
     try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "all") params.set("status", statusFilter);
       const res = await authFetch(`/api/admin/bookings?${params}`);
       const data = await res.json();
+      apiCache.set(cacheKey, data);
       setBookings(data.bookings || []);
     } catch (e) {
       console.error(e);

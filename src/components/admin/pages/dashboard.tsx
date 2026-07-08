@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
 } from "recharts";
 import { authFetch } from "@/lib/auth-store";
+import { apiCache } from "@/lib/api-cache";
 import { formatCurrency, formatDate, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -26,16 +27,51 @@ const RANGES = [
 
 const PIE_COLORS = ["var(--brand)", "var(--gold)", "#3b82f6", "#ef4444", "#a855f7"];
 
-export function AdminDashboardPage() {
-  const [data, setData] = useState<any>(null);
-  const [range, setRange] = useState("month");
-  const [loading, setLoading] = useState(true);
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-24 bg-muted rounded-xl" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 h-64 bg-muted rounded-xl" />
+        <div className="h-64 bg-muted rounded-xl" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="h-48 bg-muted rounded-xl" />
+        <div className="h-48 bg-muted rounded-xl" />
+      </div>
+    </div>
+  );
+}
 
-  const load = useCallback(async () => {
-    setLoading(true);
+export function AdminDashboardPage() {
+  const [data, setData] = useState<any>(() => apiCache.getStale(`admin:analytics:month`));
+  const [range, setRange] = useState("month");
+  const [loading, setLoading] = useState(!apiCache.getStale(`admin:analytics:month`));
+
+  const load = useCallback(async (showLoading = true) => {
+    const cacheKey = `admin:analytics:${range}`;
+    const cached = apiCache.getStale<any>(cacheKey);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+      // Revalidate in background if stale
+      if (apiCache.isStale(cacheKey)) {
+        authFetch(`/api/admin/analytics?range=${range}`)
+          .then((r) => r.json())
+          .then((json) => { apiCache.set(cacheKey, json); setData(json); })
+          .catch(() => {});
+      }
+      return;
+    }
+    if (showLoading) setLoading(true);
     try {
       const res = await authFetch(`/api/admin/analytics?range=${range}`);
       const json = await res.json();
+      apiCache.set(cacheKey, json);
       setData(json);
     } catch (e) {
       console.error(e);
@@ -44,13 +80,9 @@ export function AdminDashboardPage() {
     }
   }, [range]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  if (loading || !data) {
-    return <div className="text-muted-foreground">Loading dashboard…</div>;
-  }
+  if (loading || !data) return <DashboardSkeleton />;
 
   const { cards, charts, recentActivity } = data;
 
