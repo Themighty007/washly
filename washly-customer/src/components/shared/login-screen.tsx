@@ -1,8 +1,5 @@
-"use client";
-
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-store";
 import { IdrottLogo } from "@/components/shared/idrott-logo";
@@ -23,7 +20,6 @@ export function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const login = useAuth((s) => s.login);
-  const router = useRouter();
 
   async function handleLogin(creds?: { email?: string; password?: string }) {
     const emailVal = creds?.email ?? email;
@@ -34,7 +30,7 @@ export function LoginScreen() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch((import.meta.env.VITE_API_URL || "http://192.168.29.243:3000") + "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailVal, password: passwordVal }),
@@ -46,7 +42,6 @@ export function LoginScreen() {
       }
       toast.success(`Welcome back, ${data.user.name.split(" ")[0]}!`);
       login(data.user, data.token);
-      router.push(`/${data.user.role.toLowerCase()}`);
     } catch (err) {
       console.error(err);
       toast.error("Network error. Please try again.");

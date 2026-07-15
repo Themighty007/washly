@@ -1,7 +1,4 @@
-"use client";
-
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
@@ -26,7 +23,6 @@ import { cn } from "@/lib/utils";
 type Tab = "home" | "profile";
 
 export function CleanerApp() {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
   const [data, setData] = useState<any>(() => apiCache.getStale("cleaner:dashboard"));
   const [loading, setLoading] = useState(!apiCache.getStale("cleaner:dashboard"));
@@ -99,7 +95,7 @@ export function CleanerApp() {
             >
               <HomeTab
                 data={data}
-                onSelectTask={(t: any) => router.push(`/cleaner/task/${t.id}`)}
+                onSelectTask={(t: any) => void 0}
                 onRefresh={loadData}
               />
             </motion.div>

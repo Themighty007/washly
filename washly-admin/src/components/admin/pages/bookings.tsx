@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";

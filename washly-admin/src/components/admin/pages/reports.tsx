@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileBarChart, FileText, Calendar, Users, CreditCard, AlertTriangle, Clock, IndianRupee, CheckCircle2 } from "lucide-react";

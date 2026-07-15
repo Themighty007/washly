@@ -1,7 +1,4 @@
-"use client";
-
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { authFetch, useAuth } from "@/lib/auth-store";
@@ -64,7 +61,6 @@ interface CustomerData {
 }
 
 export function CustomerApp() {
-  const router = useRouter();
   const [tab, setTab] = useState<Tab>("home");
   const [data, setData] = useState<CustomerData | null>(() => apiCache.getStale<CustomerData>("customer:dashboard") || null);
   const [loading, setLoading] = useState(!apiCache.getStale("customer:dashboard"));
@@ -175,7 +171,7 @@ export function CustomerApp() {
               <ProfileTab
                 customer={customer}
                 totalWashes={totalWashes}
-                onShowPlanChange={() => router.push("/customer/packages")}
+                onShowPlanChange={() => void 0}
                 onLogout={logout}
               />
             </motion.div>
