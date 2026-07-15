@@ -4,6 +4,7 @@ const path = require('path');
 const srcDir = 'c:/Users/test/Downloads/workspace-f42/src';
 const custDir = 'c:/Users/test/Downloads/workspace-f42/washly-customer';
 const cleanDir = 'c:/Users/test/Downloads/workspace-f42/washly-cleaner';
+const adminDir = 'c:/Users/test/Downloads/workspace-f42/washly-admin';
 
 function copyFile(relPath, destApp) {
   const sourcePath = path.join(srcDir, relPath);
@@ -16,11 +17,11 @@ const viteConfig = "import { defineConfig } from 'vite'\nimport react from '@vit
 
 const tsConfig = '{\n  "compilerOptions": {\n    "target": "ES2020",\n    "useDefineForClassFields": true,\n    "lib": ["ES2020", "DOM", "DOM.Iterable"],\n    "module": "ESNext",\n    "skipLibCheck": true,\n    "moduleResolution": "bundler",\n    "allowImportingTsExtensions": true,\n    "isolatedModules": true,\n    "moduleDetection": "force",\n    "noEmit": true,\n    "jsx": "react-jsx",\n    "strict": true,\n    "noUnusedLocals": false,\n    "noUnusedParameters": false,\n    "noFallthroughCasesInSwitch": true,\n    "noUncheckedSideEffectImports": true,\n    "baseUrl": ".",\n    "paths": {\n      "@/*": ["./src/*"]\n    }\n  },\n  "include": ["src"]\n}';
 
-const authStore = "import { create } from \"zustand\";\nimport { persist } from \"zustand/middleware\";\n\nconst API_BASE = import.meta.env.VITE_API_URL || \"http://192.168.29.243:3000\";\n\nexport interface SessionUser {\n  id: string;\n  email: string;\n  name: string;\n  phone: string;\n  role: \"CUSTOMER\" | \"CLEANER\" | \"ADMIN\";\n  avatar?: string | null;\n  address?: string | null;\n}\n\ninterface AuthState {\n  user: SessionUser | null;\n  token: string | null;\n  login: (user: SessionUser, token: string) => void;\n  logout: () => void;\n}\n\nexport const useAuth = create<AuthState>()(\n  persist(\n    (set) => ({\n      user: null,\n      token: null,\n      login: (user, token) => set({ user, token }),\n      logout: () => set({ user: null, token: null }),\n    }),\n    { name: \"washly-auth\" }\n  )\n);\n\nexport function authFetch(url: string, init: RequestInit = {}) {\n  const token = useAuth.getState().token;\n  const headers = new Headers(init?.headers);\n  if (token) headers.set(\"Authorization\", `Bearer ${'${token}'}`);\n  if (init?.body && !headers.has(\"Content-Type\")) {\n    headers.set(\"Content-Type\", \"application/json\");\n  }\n  const fullUrl = url.startsWith(\"http\") ? url : `${'${API_BASE}'}${'${url}'}`;\n  return fetch(fullUrl, { ...init, headers });\n}";
+const authStore = "import { create } from \"zustand\";\nimport { persist } from \"zustand/middleware\";\n\nconst API_BASE = import.meta.env.VITE_API_URL || \"http://192.168.29.243:3000\";\n\nexport interface SessionUser {\n  id: string;\n  email: string;\n  name: string;\n  phone: string;\n  role: \"CUSTOMER\" | \"CLEANER\" | \"ADMIN\";\n  avatar?: string | null;\n  address?: string | null;\n}\n\ninterface AuthState {\n  user: SessionUser | null;\n  token: string | null;\n  login: (user: SessionUser, token: string) => void;\n  logout: () => void;\n}\n\nexport const useAuth = create<AuthState>()(\n  persist(\n    (set) => ({\n      user: null,\n      token: null,\n      login: (user, token) => set({ user, token }),\n      logout: () => set({ user: null, token: null }),\n    }),\n    { name: \"washly-auth\" }\n  )\n);\n\nexport function authFetch(url: string, init: RequestInit = {}) {\n  const token = useAuth.getState().token;\n  const headers = new Headers(init?.headers);\n  if (token) headers.set(\"Authorization\", `Bearer ${'${token}'}`);\n  if (init?.body && !headers.has(\"Content-Type\")) {\n    headers.set(\"Content-Type\", \"application/json\");\n  }\n  const fullUrl = url.startsWith(\"http\") ? url : `${'${API_BASE}'}${'${url}'}`;\n  return fetch(fullUrl, { ...init, headers });\n}\n\nexport function exportUrl(url: string) {\n  const token = useAuth.getState().token;\n  const fullUrl = url.startsWith(\"http\") ? url : `${'${API_BASE}'}${'${url}'}`;\n  return `${'${fullUrl}'}?token=${'${token}'}`;\n}";
 
 const mainTsx = "import React from 'react'\nimport ReactDOM from 'react-dom/client'\nimport App from './App'\nimport './index.css'\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>,\n)";
 
-const envFile = "VITE_API_URL=http://192.168.29.243:3000";
+const envFile = "VITE_API_URL=https://washly-jade.vercel.app";
 
 function setupApp(appDir, role) {
   fs.writeFileSync(path.join(appDir, 'vite.config.ts'), viteConfig);
@@ -43,21 +44,25 @@ function setupApp(appDir, role) {
   
   fs.mkdirSync(path.join(appDir, 'src/lib'), { recursive: true });
   fs.writeFileSync(path.join(appDir, 'src/lib/auth-store.ts'), authStore);
+  copyFile('lib/api-cache.ts', appDir);
 
-  let ui = ['button.tsx', 'card.tsx', 'badge.tsx', 'avatar.tsx', 'progress.tsx', 'dialog.tsx', 'scroll-area.tsx', 'label.tsx', 'input.tsx', 'toast.tsx', 'toaster.tsx', 'sonner.tsx'];
+  let ui = ['button.tsx', 'card.tsx', 'badge.tsx', 'avatar.tsx', 'progress.tsx', 'dialog.tsx', 'scroll-area.tsx', 'label.tsx', 'input.tsx', 'toast.tsx', 'toaster.tsx', 'sonner.tsx', 'table.tsx', 'select.tsx', 'switch.tsx', 'popover.tsx', 'sheet.tsx', 'dropdown-menu.tsx'];
   if (role === 'Customer') ui.push('tabs.tsx', 'separator.tsx', 'calendar.tsx');
-  if (role === 'Cleaner') ui.push('alert-dialog.tsx');
+  if (role === 'Cleaner') ui.push('alert-dialog.tsx', 'tabs.tsx');
+  if (role === 'Admin') ui.push('tabs.tsx', 'separator.tsx', 'calendar.tsx', 'alert-dialog.tsx');
   ui.forEach(f => copyFile('components/ui/' + f, appDir));
 
-  copyFile('components/shared/washly-logo.tsx', appDir);
+  copyFile('components/shared/idrott-logo.tsx', appDir);
   copyFile('components/shared/status-badge.tsx', appDir);
   copyFile('components/notifications/notification-bell.tsx', appDir);
 
   let loginContent = fs.readFileSync(path.join(srcDir, 'components/shared/login-screen.tsx'), 'utf-8');
   if (role === 'Customer') {
     loginContent = loginContent.replace(/const DEMO_ACCOUNTS[\s\S]*?\];/, "const DEMO_ACCOUNTS = [\n  { role: \"Customer\", email: \"priya@gmail.com\", password: \"customer123\", name: \"Priya Sharma\", icon: Users, desc: \"Premium plan subscriber\" },\n];");
-  } else {
+  } else if (role === 'Cleaner') {
     loginContent = loginContent.replace(/const DEMO_ACCOUNTS[\s\S]*?\];/, "const DEMO_ACCOUNTS = [\n  { role: \"Cleaner\", email: \"rajesh@washly.com\", password: \"cleaner123\", name: \"Rajesh Kumar\", icon: Car, desc: \"Active field cleaner\" },\n];");
+  } else {
+    loginContent = loginContent.replace(/const DEMO_ACCOUNTS[\s\S]*?\];/, "const DEMO_ACCOUNTS = [\n  { role: \"Admin\", email: \"admin@washly.com\", password: \"admin123\", name: \"Admin User\", icon: Crown, desc: \"System administrator\" },\n];");
   }
   fs.writeFileSync(path.join(appDir, 'src/components/shared/login-screen.tsx'), loginContent);
 
@@ -69,6 +74,8 @@ function setupApp(appDir, role) {
   let html = fs.readFileSync(path.join(appDir, 'index.html'), 'utf-8');
   html = html.replace(/<title>.*?<\/title>/, "<title>Washly " + role + "</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n    <meta name=\"theme-color\" content=\"#0d9488\">");
   fs.writeFileSync(path.join(appDir, 'index.html'), html);
+
+  fs.writeFileSync(path.join(appDir, 'postcss.config.mjs'), 'export default {};\n');
 }
 
 setupApp(custDir, 'Customer');
@@ -76,5 +83,13 @@ copyFile('components/customer/customer-app.tsx', custDir);
 
 setupApp(cleanDir, 'Cleaner');
 copyFile('components/cleaner/cleaner-app.tsx', cleanDir);
+
+setupApp(adminDir, 'Admin');
+copyFile('components/admin/admin-app.tsx', adminDir);
+fs.mkdirSync(path.join(adminDir, 'src/components/admin/pages'), { recursive: true });
+fs.readdirSync(path.join(srcDir, 'components/admin/pages')).forEach(f => {
+  copyFile('components/admin/pages/' + f, adminDir);
+});
+
 
 console.log("Done");
