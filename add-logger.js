@@ -1,12 +1,10 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0d9488" />
-    <title>Washly Cleaner</title>
-    </head>
-  <body>
+const fs = require('fs');
+const path = require('path');
+
+const apps = ['washly-customer', 'washly-cleaner', 'washly-admin'];
+const baseDir = 'c:/Users/test/Downloads/workspace-f42';
+
+const errorLogger = 
     <script>
       window.onerror = function(msg, url, line, col, error) {
         var errDiv = document.createElement('div');
@@ -38,8 +36,16 @@
         document.body.appendChild(errDiv);
       });
     </script>
+;
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+apps.forEach(app => {
+  const indexPath = path.join(baseDir, app, 'index.html');
+  let content = fs.readFileSync(indexPath, 'utf-8');
+  if (!content.includes('window.onerror')) {
+    content = content.replace('<body>', '<body>' + errorLogger);
+    fs.writeFileSync(indexPath, content, 'utf-8');
+    console.log('Added error logger to ' + app);
+  } else {
+    console.log('Error logger already exists in ' + app);
+  }
+});

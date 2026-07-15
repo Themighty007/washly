@@ -1,12 +1,10 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0d9488" />
-    <title>Washly Cleaner</title>
-    </head>
-  <body>
+const fs = require('fs');
+const path = require('path');
+
+const apps = ['washly-customer', 'washly-cleaner', 'washly-admin'];
+const baseDir = 'c:/Users/test/Downloads/workspace-f42';
+
+const errorLogger = `
     <script>
       window.onerror = function(msg, url, line, col, error) {
         var errDiv = document.createElement('div');
@@ -38,8 +36,24 @@
         document.body.appendChild(errDiv);
       });
     </script>
+`;
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+apps.forEach(app => {
+  const indexPath = path.join(baseDir, app, 'index.html');
+  let content = fs.readFileSync(indexPath, 'utf-8');
+  if (!content.includes('window.onerror')) {
+    content = content.replace('<body>', '<body>' + errorLogger);
+    fs.writeFileSync(indexPath, content, 'utf-8');
+    console.log('Added error logger to ' + app);
+  }
+
+  const vitePath = path.join(baseDir, app, 'vite.config.ts');
+  let viteContent = fs.readFileSync(vitePath, 'utf-8');
+  
+  if (!viteContent.includes('legacy(')) {
+    viteContent = viteContent.replace("import react from '@vitejs/plugin-react'", "import react from '@vitejs/plugin-react'\nimport legacy from '@vitejs/plugin-legacy'");
+    viteContent = viteContent.replace("plugins: [react(), tailwindcss()]", "plugins: [\n    react(),\n    tailwindcss(),\n    legacy({\n      targets: ['defaults', 'not IE 11', 'Android >= 5'],\n      additionalLegacyPolyfills: ['regenerator-runtime/runtime']\n    })\n  ]");
+    fs.writeFileSync(vitePath, viteContent, 'utf-8');
+    console.log('Updated vite.config.ts for ' + app);
+  }
+});
