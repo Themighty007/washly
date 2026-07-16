@@ -98,6 +98,7 @@ export function CustomerApp() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
     // Refresh on tab focus
     const onFocus = () => loadData();

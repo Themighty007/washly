@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Sparkles, Shield, Users, ArrowRight, Eye, EyeOff, Phone, Mail, Lock } from "lucide-react";
+import { Car, Sparkles, Shield, Users, ArrowRight, Eye, EyeOff, Phone, Mail, Lock, Crown } from "lucide-react";
 
 const DEMO_ACCOUNTS = [
   { role: "Admin", email: "admin@washly.com", password: "admin123", name: "Admin User", icon: Crown, desc: "System administrator" },

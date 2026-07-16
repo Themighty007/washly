@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireRole } from "@/lib/auth-server";
+import { requireRole, pushNotification } from "@/lib/auth-server";
 
 // GET /api/admin/customers/[id] - Customer detail view for admin
 export async function GET(

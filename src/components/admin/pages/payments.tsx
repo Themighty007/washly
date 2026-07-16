@@ -49,7 +49,10 @@ export function AdminPaymentsPage() {
     }
   }, [statusFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   async function markPaid(id: string) {
     const res = await authFetch("/api/admin/payments", {

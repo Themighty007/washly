@@ -15,7 +15,7 @@ export function AdminRevenuePage() {
   useEffect(() => {
     const cacheKey = "admin:analytics:year";
     const cached = apiCache.getStale<any>(cacheKey);
-    if (cached && !apiCache.isStale(cacheKey)) { setAnalytics(cached); return; }
+    if (cached && !apiCache.isStale(cacheKey)) return;
     authFetch("/api/admin/analytics?range=year").then(async (res) => {
       const data = await res.json();
       apiCache.set(cacheKey, data);

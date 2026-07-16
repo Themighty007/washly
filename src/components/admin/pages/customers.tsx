@@ -84,12 +84,15 @@ export function AdminCustomersPage() {
     }
   }, [search, planFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   useEffect(() => {
     const cacheKey = "admin:plans";
     const cached = apiCache.getStale<any>(cacheKey);
-    if (cached) { setPlans(cached.plans || []); return; }
+    if (cached) return;
     authFetch("/api/admin/plans").then(async (res) => {
       const data = await res.json();
       apiCache.set(cacheKey, data);

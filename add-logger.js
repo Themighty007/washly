@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 
 const apps = ['washly-customer', 'washly-cleaner', 'washly-admin'];
 const baseDir = 'c:/Users/test/Downloads/workspace-f42';
 
-const errorLogger = 
+const errorLogger = `
     <script>
       window.onerror = function(msg, url, line, col, error) {
         var errDiv = document.createElement('div');
@@ -36,7 +37,7 @@ const errorLogger =
         document.body.appendChild(errDiv);
       });
     </script>
-;
+`;
 
 apps.forEach(app => {
   const indexPath = path.join(baseDir, app, 'index.html');

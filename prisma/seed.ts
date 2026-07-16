@@ -123,7 +123,7 @@ async function main() {
     },
   ];
 
-  const cleaners = [];
+  const cleaners: any[] = [];
   for (const cu of cleanerUsers) {
     const user = await db.user.create({
       data: {
@@ -221,7 +221,7 @@ async function main() {
     },
   ];
 
-  const customers = [];
+  const customers: any[] = [];
   for (const cd of customerData) {
     const user = await db.user.create({
       data: {

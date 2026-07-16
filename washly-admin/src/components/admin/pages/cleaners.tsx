@@ -56,7 +56,10 @@ export function AdminCleanersPage() {
     }
   }, [search]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this cleaner?")) return;

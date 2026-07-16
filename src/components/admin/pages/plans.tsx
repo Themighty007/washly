@@ -17,7 +17,7 @@ import { formatCurrency } from "@/lib/format";
 import { apiCache } from "@/lib/api-cache";
 
 export function AdminPlansPage() {
-  const [plans, setPlans] = useState<any[]>(() => apiCache.getStale("admin:plans")?.plans || []);
+  const [plans, setPlans] = useState<any[]>(() => apiCache.getStale<any>("admin:plans")?.plans || []);
   const [loading, setLoading] = useState(!apiCache.getStale("admin:plans"));
   const [showAdd, setShowAdd] = useState(false);
   const [editPlan, setEditPlan] = useState<any | null>(null);
@@ -44,7 +44,10 @@ export function AdminPlansPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this plan?")) return;

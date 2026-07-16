@@ -64,6 +64,7 @@ export function CleanerApp() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
     const onFocus = () => loadData();
     window.addEventListener("focus", onFocus);

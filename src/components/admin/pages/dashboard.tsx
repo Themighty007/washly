@@ -80,7 +80,10 @@ export function AdminDashboardPage() {
     }
   }, [range]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   if (loading || !data) return <DashboardSkeleton />;
 

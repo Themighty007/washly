@@ -7,6 +7,7 @@ export function IdrottLogo({
 }: {
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
+  variant?: string;
 }) {
   const sizes = {
     sm: "h-8",
